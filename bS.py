@@ -3,6 +3,15 @@ import time
 import sys
 import datetime
 import traceback
+import asyncio
+from flask import Flask
+import threading
+
+app = Flask(__name__)
+
+@app.route("/")
+def hello_world():
+    return "OK"
 
 LOG_FILE = "bot_restarter.log"
 BOT_FILENAME = "main.py"
@@ -27,13 +36,24 @@ def run_bot():
             log(f"Критическая ошибка: {str(e)}\n{traceback.format_exc()}")
         finally:
             restart_count += 1
-            log(f"Бот завершил работу. Перезапуск через 10 секунд...")
-            time.sleep(10)
+            log(f"Бот завершил работу. Перезапуск через 1 секунду...")
+            time.sleep(1)
 
 if __name__ == "__main__":
     log("Скрипт перезапуска бота запущен")
     try:
-        run_bot()
+        def task1():
+            run_bot()
+        def task2():
+            app.run(host='0.0.0.0')
+        thread1 = threading.Thread(target=task1)
+        thread2 = threading.Thread(target=task2)
+
+        thread1.start()
+        thread2.start()
+
+        thread1.join()
+        thread2.join()
     except Exception as e:
         log(f"Фатальная ошибка в скрипте перезапуска: {str(e)}")
     finally:
